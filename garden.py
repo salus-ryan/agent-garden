@@ -8,6 +8,17 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("garden.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("agent_garden")
+
 from helpers import email_helper, memory_helper, backup_helper, task_prioritizer
 from helpers import agent_framework, agent_communication
 from skills import skill_registry

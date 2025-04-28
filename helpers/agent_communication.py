@@ -230,6 +230,18 @@ class MessageBus:
         # Sort by timestamp
         messages.sort(key=lambda m: m.timestamp)
         return messages
+        
+    def get_unread_messages(self, agent_id: str) -> List[Message]:
+        """
+        Get unread messages for an agent.
+        
+        Args:
+            agent_id: ID of the agent
+            
+        Returns:
+            List[Message]: List of unread messages
+        """
+        return self.get_messages(agent_id, unread_only=True)
     
     def mark_as_read(self, agent_id: str, message_id: str) -> bool:
         """

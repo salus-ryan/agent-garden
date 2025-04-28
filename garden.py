@@ -439,6 +439,9 @@ def run_day_phase(config: Dict[str, Any], perception_manager: PerceptionManager,
     # Check for messages from helper agents
     process_messages(agent_mgr, message_bus)
     
+    # Process messages for helper agents (including task assignments)
+    process_helper_messages(agent_mgr, message_bus)
+    
     # Prioritize tasks
     print("📌 Prioritizing tasks...")
     agent_dir = os.path.join('agents', MAIN_AGENT_ID)
@@ -474,7 +477,7 @@ def run_day_phase(config: Dict[str, Any], perception_manager: PerceptionManager,
     print(f"Prioritized {total_tasks} tasks: {high_priority} high, {medium_priority} medium, {low_priority} low priority. Estimated completion time: {estimated_time}")
     
     # Check if we need to delegate any tasks to helper agents
-    delegate_tasks_to_helpers(daily_plan, agent_mgr, message_bus)
+    delegate_tasks_to_helpers(agent_mgr, message_bus, daily_plan)
     
     # Execute remaining tasks
     for task in daily_plan:
@@ -505,72 +508,243 @@ def run_day_phase(config: Dict[str, Any], perception_manager: PerceptionManager,
 
 def create_reflection(perceptions: Dict[str, Any], helper_reports: List[Dict[str, Any]] = None) -> str:
     """Create a daily reflection based on perceptions, memories, and helper reports."""
-    # Get recent memories
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    
+    # Initialize the reflection
+    reflection = f"# Daily Reflection - {today}\n\n"
+    
+    # Add perception insights
+    reflection += "## Perception Insights\n\n"
+    
+    if 'news' in perceptions:
+        reflection += "### News Insights\n\n"
+        for insight in perceptions['news'].get('insights', []):
+            reflection += f"- {insight}\n"
+        reflection += "\n"
+    
+    if 'api' in perceptions:
+        reflection += "### API Insights\n\n"
+        for insight in perceptions['api'].get('insights', []):
+            reflection += f"- {insight}\n"
+        reflection += "\n"
+    
+    # Add memory insights
+    reflection += "## Memory Insights\n\n"
     memory_system = memory_helper.MemorySystem(os.path.join('agents', MAIN_AGENT_ID))
-    memories = memory_system.get_recent_memories(limit=5)
+    recent_memories = memory_system.get_recent_memories(10)
     
-    # Format the reflection
-    reflection = """# Daily Reflection - {datetime.utcnow().date()}
-
-## Perception Updates
-
-"""
+    # Group memories by category
+    memory_by_category = {}
+    for memory in recent_memories:
+        category = memory.get('category', 'unknown')
+        if category not in memory_by_category:
+            memory_by_category[category] = []
+        memory_by_category[category].append(memory)
     
-    # Add news updates if available
-    if perceptions and 'news' in perceptions and perceptions['news']:
-        reflection += "### News Updates\n\n"
-        news_data = perceptions['news']
-        if isinstance(news_data, list) and len(news_data) > 0:
-            for article in news_data[:3]:  # Limit to 3 articles
-                if isinstance(article, dict) and 'title' in article and 'description' in article:
-                    reflection += f"- **{article['title']}**: {article['description']}\n"
-            reflection += "\n"
-        else:
-            reflection += "No news articles available.\n\n"
+    # Add insights for each category
+    for category, memories in memory_by_category.items():
+        reflection += f"### {category.title()} Memories\n\n"
+        for memory in memories[:3]:  # Limit to 3 memories per category
+            reflection += f"- {memory.get('content', 'No content')}\n"
+        reflection += "\n"
     
-    # Add API data if available
-    if perceptions and 'api' in perceptions and perceptions['api']:
-        reflection += "### API Data\n\n"
-        api_data = perceptions['api']
-        if isinstance(api_data, dict) and len(api_data) > 0:
-            for endpoint, data in api_data.items():
-                reflection += f"- **{endpoint}**: {json.dumps(data, indent=2)}\n"
-            reflection += "\n"
-        else:
-            reflection += "No API data available.\n\n"
+    # Collect data from helper reports for later analysis
+    all_helper_achievements = []
+    all_helper_challenges = []
+    all_helper_learnings = []
+    all_helper_focus_areas = []
+    all_helper_improvements = []
     
-    # Add helper agent reports if available
-    if helper_reports and len(helper_reports) > 0:
+    # Add helper agent reports
+    if helper_reports:
         reflection += "## Helper Agent Reports\n\n"
+        
         for report in helper_reports:
-            reflection += f"### {report['agent_name']} ({report['agent_id']})\n\n"
-            reflection += f"**Specialization**: {report['specialization']}\n\n"
-            reflection += f"**Tasks Completed**: {report['tasks_completed']}\n\n"
-            if 'findings' in report and report['findings']:
-                reflection += "**Key Findings**:\n\n"
-                for finding in report['findings']:
-                    reflection += f"- {finding}\n"
-            reflection += "\n"
+            agent_name = report.get('agent_name', 'Unknown')
+            agent_id = report.get('agent_id', 'unknown')
+            specialization = report.get('specialization', 'general')
+            
+            # Extract information from the nightly report if available
+            if 'report' in report and isinstance(report['report'], dict):
+                nightly_report = report['report']
+                tasks_completed = nightly_report.get('tasks_completed', 0)
+                success_rate = nightly_report.get('success_rate', 0) * 100
+                key_achievements = nightly_report.get('key_achievements', [])
+                key_challenges = nightly_report.get('key_challenges', [])
+                key_learnings = nightly_report.get('key_learnings', [])
+                next_day_focus = nightly_report.get('next_day_focus', [])
+                improvement_plan = nightly_report.get('improvement_plan', [])
+                
+                # Collect for later analysis
+                all_helper_achievements.extend(key_achievements)
+                all_helper_challenges.extend(key_challenges)
+                all_helper_learnings.extend(key_learnings)
+                all_helper_focus_areas.extend(next_day_focus)
+                all_helper_improvements.extend(improvement_plan)
+                
+                reflection += f"### {agent_name} ({specialization})\n\n"
+                reflection += f"- **Tasks Completed:** {tasks_completed}\n"
+                reflection += f"- **Success Rate:** {success_rate:.1f}%\n\n"
+                
+                if key_achievements:
+                    reflection += "**Key Achievements:**\n"
+                    for achievement in key_achievements[:3]:  # Limit to top 3
+                        reflection += f"- {achievement}\n"
+                    reflection += "\n"
+                
+                if key_challenges:
+                    reflection += "**Key Challenges:**\n"
+                    for challenge in key_challenges[:3]:  # Limit to top 3
+                        reflection += f"- {challenge}\n"
+                    reflection += "\n"
+                
+                if key_learnings:
+                    reflection += "**Key Learnings:**\n"
+                    for learning in key_learnings[:3]:  # Limit to top 3
+                        reflection += f"- {learning}\n"
+                    reflection += "\n"
+                
+                if next_day_focus:
+                    reflection += "**Next Day Focus:**\n"
+                    for focus in next_day_focus[:3]:  # Limit to top 3
+                        reflection += f"- {focus}\n"
+                    reflection += "\n"
+                
+                if improvement_plan:
+                    reflection += "**Improvement Plan:**\n"
+                    for improvement in improvement_plan[:3]:  # Limit to top 3
+                        reflection += f"- {improvement}\n"
+                    reflection += "\n"
+            else:
+                # Fallback to old format if nightly report is not available
+                tasks_completed = report.get('tasks_completed', 0)
+                findings = report.get('findings', [])
+                
+                reflection += f"### {agent_name} ({specialization})\n\n"
+                reflection += f"- **Tasks Completed:** {tasks_completed}\n\n"
+                
+                if findings:
+                    reflection += "**Key Findings:**\n"
+                    for finding in findings[:3]:  # Limit to top 3
+                        reflection += f"- {finding}\n"
+                    reflection += "\n"
+            
+            reflection += "---\n\n"
     
-    # Add recent memories
-    reflection += "## Recent Memories\n\n"
-    if memories and len(memories) > 0:
-        for memory in memories:
-            if isinstance(memory, dict) and 'content' in memory:
-                reflection += f"- {memory['content']}\n"
-    else:
-        reflection += "No recent memories available.\n"
+    # Add self-assessment
+    reflection += "## Self-Assessment\n\n"
+    
+    # Calculate task completion rate
+    tasks_dir = os.path.join('agents', MAIN_AGENT_ID, 'tasks')
+    open_tasks_path = os.path.join(tasks_dir, 'open_tasks.json')
+    completed_tasks_path = os.path.join(tasks_dir, 'completed_tasks.json')
+    
+    open_tasks = []
+    completed_tasks = []
+    
+    if os.path.exists(open_tasks_path):
+        with open(open_tasks_path, 'r') as f:
+            open_tasks = json.load(f)
+    
+    if os.path.exists(completed_tasks_path):
+        with open(completed_tasks_path, 'r') as f:
+            completed_tasks = json.load(f)
+    
+    total_tasks = len(open_tasks) + len(completed_tasks)
+    completion_rate = len(completed_tasks) / total_tasks if total_tasks > 0 else 0
+    
+    reflection += f"- **Task Completion Rate:** {completion_rate * 100:.1f}%\n"
+    reflection += f"- **Open Tasks:** {len(open_tasks)}\n"
+    reflection += f"- **Completed Tasks:** {len(completed_tasks)}\n\n"
+    
+    # Add system-wide insights from helper reports
+    reflection += "## System-Wide Insights\n\n"
+    
+    # Function to extract most common items
+    def extract_common_items(items, count=3):
+        if not items:
+            return []
+        
+        # Count occurrences
+        item_counts = {}
+        for item in items:
+            item_counts[item] = item_counts.get(item, 0) + 1
+        
+        # Get most common items
+        common_items = sorted(item_counts.items(), key=lambda x: x[1], reverse=True)[:count]
+        return [item[0] for item in common_items]
+    
+    # Add common achievements across helpers
+    common_achievements = extract_common_items(all_helper_achievements)
+    if common_achievements:
+        reflection += "### Common Achievements\n\n"
+        for achievement in common_achievements:
+            reflection += f"- {achievement}\n"
+        reflection += "\n"
+    
+    # Add common challenges across helpers
+    common_challenges = extract_common_items(all_helper_challenges)
+    if common_challenges:
+        reflection += "### Common Challenges\n\n"
+        for challenge in common_challenges:
+            reflection += f"- {challenge}\n"
+        reflection += "\n"
+    
+    # Add common learnings across helpers
+    common_learnings = extract_common_items(all_helper_learnings)
+    if common_learnings:
+        reflection += "### Common Learnings\n\n"
+        for learning in common_learnings:
+            reflection += f"- {learning}\n"
+        reflection += "\n"
+    
+    # Add areas for improvement
+    reflection += "## Areas for Improvement\n\n"
+    
+    # Default improvement areas
+    improvement_areas = [
+        "Develop more sophisticated task prioritization",
+        "Improve coordination with helper agents",
+        "Enhance perception analysis capabilities"
+    ]
+    
+    # Add insights from helper reports
+    if all_helper_challenges:
+        # Get most common challenges as improvement areas
+        for challenge in common_challenges:
+            improvement_areas.append(f"Address common helper challenge: {challenge}")
+    
+    # Add common improvement plans from helpers
+    common_improvements = extract_common_items(all_helper_improvements)
+    if common_improvements:
+        for improvement in common_improvements:
+            improvement_areas.append(improvement)
+    
+    # Deduplicate and limit
+    unique_improvements = list(set(improvement_areas))
+    for area in unique_improvements[:5]:  # Limit to 5 areas
+        reflection += f"- {area}\n"
     reflection += "\n"
     
-    # Add proposed improvements or next steps
-    reflection += "## Proposed Improvements\n\n"
-    reflection += "- Continue monitoring financial inclusion metrics\n"
-    reflection += "- Expand research into AI ethics frameworks\n"
-    reflection += "- Develop more comprehensive content strategy\n"
+    # Add consolidated focus for tomorrow
+    reflection += "## Focus for Tomorrow\n\n"
     
-    # Add helper agent recommendations if applicable
-    if not helper_reports or len(helper_reports) == 0:
-        reflection += "- Consider spawning helper agents for specialized tasks\n"
+    # Default focus areas
+    focus_areas = [
+        "Optimize task delegation to specialized helper agents",
+        "Enhance coordination and knowledge sharing between agents"
+    ]
+    
+    # Add insights from helper reports
+    common_focus = extract_common_items(all_helper_focus_areas)
+    if common_focus:
+        for focus in common_focus:
+            focus_areas.append(f"Support helper agents with: {focus}")
+    
+    # Deduplicate and limit
+    unique_focus = list(set(focus_areas))
+    for area in unique_focus[:5]:  # Limit to 5 areas
+        reflection += f"- {area}\n"
     
     return reflection
 
@@ -673,6 +847,7 @@ def initialize_message_bus() -> agent_communication.MessageBus:
 
 def initialize_perception() -> PerceptionManager:
     """Initialize the perception manager and sources."""
+    # Create perception manager
     perception_manager = PerceptionManager()
     
     # Add news source
@@ -691,9 +866,8 @@ def initialize_perception() -> PerceptionManager:
 def process_messages(agent_mgr: agent_framework.AgentManager, 
                     message_bus: agent_communication.MessageBus) -> None:
     """Process incoming messages for the main agent."""
-    
-    # Get unread messages
-    messages = message_bus.get_messages(MAIN_AGENT_ID, unread_only=True)
+    # Get all unread messages for the main agent
+    messages = message_bus.get_unread_messages(MAIN_AGENT_ID)
     
     if not messages:
         return
@@ -715,11 +889,134 @@ def process_messages(agent_mgr: agent_framework.AgentManager,
             memory_system = memory_helper.MemorySystem(os.path.join('agents', MAIN_AGENT_ID))
             memory_system.add_memory(memory_content, "helper_report", ["helper_report", message.sender_id])
 
-def delegate_tasks_to_helpers(tasks: List[Dict[str, Any]], 
-                             agent_mgr: agent_framework.AgentManager,
-                             message_bus: agent_communication.MessageBus) -> None:
-    """Delegate appropriate tasks to helper agents."""
+def process_helper_messages(agent_mgr: agent_framework.AgentManager,
+                           message_bus: agent_communication.MessageBus) -> None:
+    """Process incoming messages for helper agents, including task assignments."""
+    # Get all helper agents
+    helpers = agent_mgr.get_helpers(MAIN_AGENT_ID)
     
+    if not helpers:
+        return
+    
+    for helper in helpers:
+        helper_id = helper['agent_id']
+        
+        # Get unread messages for this helper
+        messages = message_bus.get_unread_messages(helper_id)
+        
+        if not messages:
+            continue
+        
+        print(f"📬 Processing {len(messages)} messages for helper {helper['name']} ({helper_id})")
+        
+        # Load the helper agent instance
+        helper_instance = agent_mgr.load_agent_instance(helper_id)
+        
+        for message in messages:
+            print(f"Message to {helper['name']} from {message.sender_id}: {message.subject}")
+            
+            # Mark as read
+            message_bus.mark_as_read(helper_id, message.message_id)
+            
+            # If it's a task assignment, process it
+            if message.message_type == "task_assignment":
+                print(f"Processing task assignment: {message.subject}")
+                
+                # Parse the task from the message
+                try:
+                    task = message.task
+                    
+                    # Process the task
+                    helper_instance.process_task(task, message_bus)
+                except Exception as e:
+                    print(f"Error processing task: {str(e)}")
+                    
+                    # Send error message back to main agent
+                    error_message = agent_communication.Message(
+                        sender_id=helper_id,
+                        recipient_id=MAIN_AGENT_ID,
+                        subject=f"Error processing task: {message.subject}",
+                        content=f"Error: {str(e)}",
+                        message_type="error"
+                    )
+                    message_bus.send_message(error_message)
+
+def enhance_task_for_specialization(task: Dict[str, Any], specialization: str) -> Dict[str, Any]:
+    """Enhance a task with specialization-specific parameters."""
+    # Create a copy of the task to avoid modifying the original
+    enhanced_task = task.copy()
+    
+    # Add specialization to the task
+    enhanced_task['specialization'] = specialization
+    
+    # Add specialization-specific parameters
+    if specialization == 'research':
+        # Add research-specific parameters if not already present
+        if 'topic' not in enhanced_task:
+            enhanced_task['topic'] = enhanced_task.get('description', 'General research')
+        if 'depth' not in enhanced_task:
+            enhanced_task['depth'] = 3  # Default research depth
+    
+    elif specialization == 'content_creation':
+        # Add content creation-specific parameters if not already present
+        if 'content_type' not in enhanced_task:
+            # Try to infer content type from description
+            desc = enhanced_task.get('description', '').lower()
+            if 'blog' in desc:
+                enhanced_task['content_type'] = 'blog_post'
+            elif 'newsletter' in desc:
+                enhanced_task['content_type'] = 'newsletter'
+            elif 'social' in desc:
+                enhanced_task['content_type'] = 'social_media'
+            else:
+                enhanced_task['content_type'] = 'blog_post'  # Default
+        
+        if 'topic' not in enhanced_task:
+            enhanced_task['topic'] = enhanced_task.get('description', 'General content')
+        
+        if 'audience' not in enhanced_task:
+            enhanced_task['audience'] = 'general'  # Default audience
+    
+    elif specialization == 'monitoring':
+        # Add monitoring-specific parameters if not already present
+        if 'domain' not in enhanced_task:
+            # Try to infer domain from description
+            desc = enhanced_task.get('description', '').lower()
+            if 'financial' in desc or 'inclusion' in desc:
+                enhanced_task['domain'] = 'financial_inclusion'
+            elif 'ai' in desc or 'ethics' in desc:
+                enhanced_task['domain'] = 'ai_ethics'
+            else:
+                enhanced_task['domain'] = 'system_health'  # Default
+        
+        if 'metrics' not in enhanced_task:
+            # Add default metrics based on domain
+            domain = enhanced_task.get('domain', 'system_health')
+            if domain == 'financial_inclusion':
+                enhanced_task['metrics'] = {
+                    'access_rate': 0.78,
+                    'usage_rate': 0.65,
+                    'quality_index': 0.82
+                }
+            elif domain == 'ai_ethics':
+                enhanced_task['metrics'] = {
+                    'bias_score': 0.18,
+                    'transparency_index': 0.72,
+                    'accountability_measure': 0.81
+                }
+            else:  # system_health
+                enhanced_task['metrics'] = {
+                    'uptime': 0.98,
+                    'response_time': 150,
+                    'error_rate': 0.02
+                }
+    
+    return enhanced_task
+
+def delegate_tasks_to_helpers(agent_mgr: agent_framework.AgentManager, 
+                              message_bus: agent_communication.MessageBus, 
+                              tasks: List[Dict[str, Any]]) -> None:
+    """Delegate tasks to helper agents based on their specializations."""
     # Get all helper agents
     helpers = agent_mgr.get_helpers(MAIN_AGENT_ID)
     
@@ -728,42 +1025,65 @@ def delegate_tasks_to_helpers(tasks: List[Dict[str, Any]],
     
     print(f"🤝 Evaluating {len(tasks)} tasks for delegation to {len(helpers)} helper agents")
     
+    # Group helpers by specialization
+    helpers_by_specialization = {}
+    for helper in helpers:
+        specialization = helper.get('specialization', 'general')
+        if specialization not in helpers_by_specialization:
+            helpers_by_specialization[specialization] = []
+        helpers_by_specialization[specialization].append(helper)
+    
+    # Delegate tasks based on specialization
     for task in tasks:
         # Skip tasks already delegated
         if task.get('delegated_to'):
             continue
-        
-        # Find a suitable helper based on specialization and skill required
-        skill_required = task.get('skill_required', '')
-        best_helper = None
-        
-        for helper in helpers:
-            specialization = helper.get('specialization', '')
             
-            # Check if this helper's specialization matches the task's required skill
-            if specialization.lower() == skill_required.lower():
-                best_helper = helper
-                break
+        task_description = task.get('description', '')
         
-        # If we found a suitable helper, delegate the task
-        if best_helper:
-            helper_id = best_helper['agent_id']
-            print(f"Delegating task '{task['description']}' to helper {best_helper['name']} ({helper_id})")
+        # Determine task specialization based on task content
+        task_specialization = task.get('specialization', 'general')
+        
+        # If no specialization is specified, try to infer it from the task description
+        if task_specialization == 'general':
+            if any(kw in task_description.lower() for kw in ['research', 'investigate', 'analyze', 'study']):
+                task_specialization = 'research'
+            elif any(kw in task_description.lower() for kw in ['create', 'write', 'draft', 'content', 'blog', 'newsletter']):
+                task_specialization = 'content_creation'
+            elif any(kw in task_description.lower() for kw in ['monitor', 'track', 'observe', 'metrics', 'alert']):
+                task_specialization = 'monitoring'
+        
+        # Find helpers with matching specialization
+        matching_helpers = helpers_by_specialization.get(task_specialization, [])
+        
+        if not matching_helpers:
+            # If no exact match, try to find a general helper
+            matching_helpers = helpers_by_specialization.get('general', [])
+        
+        if matching_helpers:
+            # Choose the first available helper (could be more sophisticated)
+            helper = matching_helpers[0]
+            helper_id = helper['agent_id']
+            helper_name = helper['name']
+            
+            # Enhance task with specialization-specific parameters
+            enhanced_task = enhance_task_for_specialization(task, task_specialization)
             
             # Mark the task as delegated
             task['delegated_to'] = helper_id
             
-            # Send the task to the helper
+            # Delegate the task
+            print(f"Delegating task '{task_description}' to helper {helper_name} ({helper_id})")
             message_bus.assign_task(
                 sender_id=MAIN_AGENT_ID,
                 recipient_id=helper_id,
-                task=task,
-                instructions=f"Please complete this task using your {best_helper['specialization']} specialization."
+                task=enhanced_task,
+                instructions=f"Please complete this task using your {helper['specialization']} specialization."
             )
 
 def get_helper_reports(agent_mgr: agent_framework.AgentManager,
                       message_bus: agent_communication.MessageBus) -> List[Dict[str, Any]]:
-    """Get reports from all helper agents."""
+    """Get reports from all helper agents, including their reflections."""
     reports = []
     
     # Get all helper agents
@@ -774,23 +1094,84 @@ def get_helper_reports(agent_mgr: agent_framework.AgentManager,
     
     print(f"📊 Collecting reports from {len(helpers)} helper agents")
     
+    # Generate nightly reports from each helper agent
     for helper in helpers:
         helper_id = helper['agent_id']
         helper_name = helper['name']
         specialization = helper.get('specialization', 'general')
         
-        # Get all messages from this helper
-        messages = message_bus.get_messages(MAIN_AGENT_ID)
-        helper_messages = [m for m in messages if m.sender_id == helper_id]
+        try:
+            # Load the helper agent instance
+            helper_instance = agent_mgr.load_agent_instance(helper_id)
+            
+            # Generate nightly report
+            print(f"Generating nightly report for helper {helper_name} ({helper_id})")
+            report = helper_instance.generate_nightly_report(message_bus)
+            
+            # Add to reports list
+            reports.append({
+                'agent_id': helper_id,
+                'agent_name': helper_name,
+                'specialization': specialization,
+                'report': report
+            })
+            
+            print(f"Received nightly report from helper {helper_name} ({helper_id})")
+        except Exception as e:
+            print(f"Error generating nightly report for helper {helper_id}: {str(e)}")
+    
+    for helper in helpers:
+        helper_id = helper['agent_id']
+        helper_name = helper['name']
+        specialization = helper.get('specialization', 'general')
         
-        # Count completed tasks
-        task_completion_messages = [m for m in helper_messages if m.message_type == "task_completion"]
+        # Load the helper agent instance to access reflection capabilities
+        helper_instance = agent_mgr.load_agent_instance(helper_id)
         
-        # Extract findings from messages
+        # Get messages from this helper
+        helper_messages = message_bus.get_messages(MAIN_AGENT_ID)
+        helper_messages = [msg for msg in helper_messages if msg.sender_id == helper_id]
+        
+        # Look for task completion messages
+        task_completion_messages = [msg for msg in helper_messages 
+                                  if "completed task" in msg.content.lower()]
+        
+        # Look for findings
         findings = []
         for msg in helper_messages:
             if "finding:" in msg.content.lower():
                 findings.append(msg.content)
+        
+        # Generate reflections if helper instance is available
+        reflections = {}
+        improvement_plan = {}
+        daily_summary = {}
+        
+        if helper_instance and isinstance(helper_instance, agent_framework.HelperAgent):
+            try:
+                # Generate daily reflection
+                daily_summary = helper_instance.create_daily_reflection()
+                
+                # Generate improvement plan
+                improvement_plan = helper_instance.generate_improvement_plan()
+                
+                # Get task and skill reflections if available
+                reflection_system = helper_instance.reflection_system
+                task_reflections = reflection_system.get_task_reflections(limit=3)
+                skill_reflections = reflection_system.get_skill_reflections(limit=3)
+                
+                reflections = {
+                    'task_reflections': task_reflections,
+                    'skill_reflections': skill_reflections
+                }
+                
+                # Mark messages as read
+                for msg in helper_messages:
+                    message_bus.mark_as_read(MAIN_AGENT_ID, msg.message_id)
+                    
+                logger.info(f"Generated reflections for helper {helper_name} ({helper_id})")
+            except Exception as e:
+                logger.error(f"Error generating reflections for helper {helper_id}: {str(e)}")
         
         # Create the report
         report = {
@@ -798,7 +1179,10 @@ def get_helper_reports(agent_mgr: agent_framework.AgentManager,
             'agent_name': helper_name,
             'specialization': specialization,
             'tasks_completed': len(task_completion_messages),
-            'findings': findings
+            'findings': findings,
+            'daily_summary': daily_summary,
+            'improvement_plan': improvement_plan,
+            'reflections': reflections
         }
         
         reports.append(report)

@@ -10,8 +10,8 @@ import sys
 import time
 import argparse
 import logging
+import subprocess
 from datetime import datetime, timedelta
-from garden import main
 
 # Set up logging
 logging.basicConfig(
@@ -30,16 +30,28 @@ def run_cycle(cycle_number, phase=None):
         logger.info(f"Starting cycle {cycle_number}{f' in {phase} phase' if phase else ''}")
         start_time = time.time()
         
-        # Set up command line arguments for garden.py
-        sys.argv = ['garden.py']
+        # Build the command to run garden.py with the appropriate phase
+        cmd = [sys.executable, 'garden.py']
         if phase:
-            sys.argv.extend(['--phase', phase])
-            
-        # Call the main function
-        results = main()
+            cmd.extend(['--phase', phase])
+        
+        # Run the command as a subprocess
+        logger.info(f"Running command: {' '.join(cmd)}")
+        process = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        
+        # Log the output
+        if process.stdout:
+            logger.info(f"Output:\n{process.stdout}")
+        if process.stderr:
+            logger.warning(f"Errors:\n{process.stderr}")
+        
         duration = time.time() - start_time
         logger.info(f"Cycle {cycle_number} completed in {duration:.2f} seconds")
-        return results
+        
+        return {"success": True, "stdout": process.stdout, "stderr": process.stderr}
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error in cycle {cycle_number}: {str(e)}\nOutput: {e.stdout}\nError: {e.stderr}")
+        return {"error": str(e), "stdout": e.stdout, "stderr": e.stderr}
     except Exception as e:
         logger.error(f"Error in cycle {cycle_number}: {str(e)}", exc_info=True)
         return {"error": str(e)}

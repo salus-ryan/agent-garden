@@ -1,0 +1,24 @@
+{
+  "message_id": "7886d04f-d5c8-4964-9c07-64816db5c73f",
+  "sender_id": "agent_001",
+  "recipient_id": "helper_79489214",
+  "subject": "Task Assignment: Draft blog post on equitable AI systems",
+  "content": "Please complete this task using your content_creation specialization.",
+  "message_type": "task",
+  "reference_id": null,
+  "timestamp": "2025-04-28T15:42:37.094602",
+  "read": false,
+  "task": {
+    "id": "task_003",
+    "description": "Draft blog post on equitable AI systems",
+    "priority": "low",
+    "due_date": "2025-05-10",
+    "tags": [
+      "content",
+      "education"
+    ],
+    "skill_required": "content_creation",
+    "estimated_minutes": 120,
+    "delegated_to": "helper_79489214"
+  }
+}

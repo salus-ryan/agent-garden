@@ -1,0 +1,9 @@
+{
+  "agent_id": "helper_b4eaa340",
+  "name": "ResearchBot",
+  "mission": "Conduct in-depth research on AI ethics and financial inclusion topics",
+  "parent_id": "agent_001",
+  "created_at": "2025-04-28T15:21:26.190621",
+  "skills": [],
+  "specialization": "research"
+}

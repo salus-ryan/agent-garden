@@ -1,0 +1,25 @@
+{
+  "message_id": "d5069499-f936-41ab-af8d-0d187d31c3c2",
+  "sender_id": "agent_001",
+  "recipient_id": "helper_b4eaa340",
+  "subject": "Task Assignment: Analyze competitor AI ethics frameworks",
+  "content": "Please complete this task using your research specialization.",
+  "message_type": "task",
+  "reference_id": null,
+  "timestamp": "2025-04-28T15:42:37.094315",
+  "read": false,
+  "task": {
+    "id": "task_004",
+    "description": "Analyze competitor AI ethics frameworks",
+    "priority": "high",
+    "due_date": "2025-05-02",
+    "tags": [
+      "research",
+      "competitive_analysis",
+      "ai_ethics"
+    ],
+    "skill_required": "research",
+    "estimated_minutes": 75,
+    "delegated_to": "helper_b4eaa340"
+  }
+}

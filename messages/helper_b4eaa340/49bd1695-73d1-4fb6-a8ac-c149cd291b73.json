@@ -1,0 +1,11 @@
+{
+  "message_id": "49bd1695-73d1-4fb6-a8ac-c149cd291b73",
+  "sender_id": "agent_001",
+  "recipient_id": "helper_b4eaa340",
+  "subject": "Welcome to the Agent Garden",
+  "content": "Welcome ResearchBot! You have been created to help with research tasks. Your mission is: Conduct in-depth research on AI ethics and financial inclusion topics",
+  "message_type": "welcome",
+  "reference_id": null,
+  "timestamp": "2025-04-28T15:21:26.191065",
+  "read": false
+}

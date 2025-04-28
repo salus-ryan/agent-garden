@@ -1,0 +1,40 @@
+[
+  {
+    "name": "financial_inclusion_metrics",
+    "url": "https://api.example.com/financial-inclusion",
+    "method": "GET",
+    "headers": {
+      "Authorization": "Bearer ${FINANCIAL_API_KEY}",
+      "Content-Type": "application/json"
+    },
+    "params": {
+      "region": "global",
+      "period": "quarterly"
+    },
+    "timeout": 10
+  },
+  {
+    "name": "ai_ethics_index",
+    "url": "https://api.example.com/ai-ethics",
+    "method": "GET",
+    "headers": {
+      "Authorization": "Bearer ${AI_ETHICS_API_KEY}",
+      "Content-Type": "application/json"
+    },
+    "params": {
+      "metrics": "bias,transparency,accountability",
+      "format": "json"
+    },
+    "timeout": 10
+  },
+  {
+    "name": "system_health",
+    "url": "https://api.example.com/system/health",
+    "method": "GET",
+    "headers": {
+      "Authorization": "Bearer ${SYSTEM_API_KEY}",
+      "Content-Type": "application/json"
+    },
+    "timeout": 5
+  }
+]

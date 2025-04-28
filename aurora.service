@@ -1,0 +1,23 @@
+[Unit]
+Description=Aurora Agent Garden 24/7 Service
+After=network.target
+
+[Service]
+User=owner
+WorkingDirectory=/home/owner/Projects/agent_garden
+ExecStart=/home/owner/Projects/agent_garden/venv/bin/python /home/owner/Projects/agent_garden/run_aurora.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONPATH=/home/owner/Projects/agent_garden
+Environment="PATH=/home/owner/Projects/agent_garden/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Load environment variables from .env file
+EnvironmentFile=-/home/owner/Projects/agent_garden/.env
+
+[Install]
+WantedBy=multi-user.target

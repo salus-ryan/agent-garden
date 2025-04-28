@@ -1,0 +1,12 @@
+# Core dependencies
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Email handling
+# smtplib and email are part of the Python standard library
+
+# Future dependencies for Phase 2 & 3
+# beautifulsoup4==4.12.2  # For web scraping
+# streamlit==1.28.0      # For dashboard
+# flask==2.3.3           # Alternative for dashboard
+# schedule==1.2.0        # For scheduling tasks

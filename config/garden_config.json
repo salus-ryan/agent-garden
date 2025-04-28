@@ -1,0 +1,30 @@
+{
+  "version": "0.1.0",
+  "garden_name": "Agent Garden",
+  "description": "A persistent garden of evolving AI agents aligned with human dignity and financial equity",
+  "admin_email": "ryan.barrett@salusfintech.com",
+  "backup_settings": {
+    "frequency": "daily",
+    "retention_days": 30,
+    "backup_time": "23:00"
+  },
+  "pulse_settings": {
+    "day_phase_start_hour": 8,
+    "night_phase_start_hour": 20,
+    "timezone": "UTC"
+  },
+  "email_settings": {
+    "enabled": true,
+    "daily_report": true,
+    "weekly_summary": true,
+    "alert_on_failure": true
+  },
+  "agents": [
+    {
+      "id": "agent_001",
+      "name": "Aurora",
+      "status": "active",
+      "directory": "agents/agent_001/"
+    }
+  ]
+}

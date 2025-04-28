@@ -1,0 +1,25 @@
+{
+  "message_id": "ca46b994-1ee1-488d-abad-9c813c915772",
+  "sender_id": "agent_001",
+  "recipient_id": "helper_79489214",
+  "subject": "Task Assignment: Create weekly financial inclusion newsletter",
+  "content": "Please complete this task using your content_creation specialization.",
+  "message_type": "task",
+  "reference_id": null,
+  "timestamp": "2025-04-28T15:27:04.578119",
+  "read": false,
+  "task": {
+    "id": "task_005",
+    "description": "Create weekly financial inclusion newsletter",
+    "priority": "medium",
+    "due_date": "2025-05-03",
+    "tags": [
+      "content",
+      "financial_inclusion",
+      "weekly"
+    ],
+    "skill_required": "content_creation",
+    "estimated_minutes": 60,
+    "delegated_to": "helper_79489214"
+  }
+}

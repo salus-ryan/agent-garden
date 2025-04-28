@@ -1,0 +1,9 @@
+{
+  "agent_id": "helper_79489214",
+  "name": "ContentBot",
+  "mission": "Create engaging and educational content about financial inclusion and AI ethics",
+  "parent_id": "agent_001",
+  "created_at": "2025-04-28T15:21:59.920112",
+  "skills": [],
+  "specialization": "content_creation"
+}

@@ -1,0 +1,11 @@
+{
+  "message_id": "43d3d84d-f16e-4a7f-8768-8c9f8ed27fc0",
+  "sender_id": "agent_001",
+  "recipient_id": "helper_b24724e0",
+  "subject": "Welcome to the Agent Garden",
+  "content": "Welcome MonitorBot! You have been created to help with monitoring tasks. Your mission is: Monitor financial inclusion metrics and AI ethics compliance",
+  "message_type": "welcome",
+  "reference_id": null,
+  "timestamp": "2025-04-28T15:22:07.896410",
+  "read": false
+}

@@ -1,0 +1,26 @@
+{
+  "message_id": "247cd5e0-74c1-4960-9ac7-0067458d11e9",
+  "sender_id": "agent_001",
+  "recipient_id": "helper_b24724e0",
+  "subject": "Task Assignment: Monitor AI bias metrics in lending algorithms",
+  "content": "Please complete this task using your monitoring specialization.",
+  "message_type": "task",
+  "reference_id": null,
+  "timestamp": "2025-04-28T15:59:58.787009",
+  "read": false,
+  "task": {
+    "id": "task_006",
+    "description": "Monitor AI bias metrics in lending algorithms",
+    "priority": "high",
+    "due_date": "2025-04-29",
+    "tags": [
+      "monitoring",
+      "ai_ethics",
+      "bias",
+      "urgent"
+    ],
+    "skill_required": "monitoring",
+    "estimated_minutes": 60,
+    "delegated_to": "helper_b24724e0"
+  }
+}

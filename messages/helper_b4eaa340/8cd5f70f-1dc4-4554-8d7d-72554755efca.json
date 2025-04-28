@@ -1,0 +1,25 @@
+{
+  "message_id": "8cd5f70f-1dc4-4554-8d7d-72554755efca",
+  "sender_id": "agent_001",
+  "recipient_id": "helper_b4eaa340",
+  "subject": "Task Assignment: Research emerging fintech solutions for underbanked communities",
+  "content": "Please complete this task using your research specialization.",
+  "message_type": "task",
+  "reference_id": null,
+  "timestamp": "2025-04-28T15:59:43.866944",
+  "read": false,
+  "task": {
+    "id": "task_007",
+    "description": "Research emerging fintech solutions for underbanked communities",
+    "priority": "medium",
+    "due_date": "2025-05-08",
+    "tags": [
+      "research",
+      "financial_inclusion",
+      "fintech"
+    ],
+    "skill_required": "research",
+    "estimated_minutes": 90,
+    "delegated_to": "helper_b4eaa340"
+  }
+}

@@ -1,0 +1,105 @@
+[
+  {
+    "id": "task_006",
+    "description": "Monitor AI bias metrics in lending algorithms",
+    "priority": "high",
+    "due_date": "2025-04-29",
+    "tags": [
+      "monitoring",
+      "ai_ethics",
+      "bias",
+      "urgent"
+    ],
+    "skill_required": "monitoring",
+    "estimated_minutes": 60
+  },
+  {
+    "id": "task_001",
+    "description": "Research latest developments in AI ethics",
+    "priority": "high",
+    "due_date": "2025-04-30",
+    "tags": [
+      "research",
+      "ai_ethics",
+      "urgent"
+    ],
+    "skill_required": "research",
+    "estimated_minutes": 90
+  },
+  {
+    "id": "task_004",
+    "description": "Analyze competitor AI ethics frameworks",
+    "priority": "high",
+    "due_date": "2025-05-02",
+    "tags": [
+      "research",
+      "competitive_analysis",
+      "ai_ethics"
+    ],
+    "skill_required": "research",
+    "estimated_minutes": 75
+  },
+  {
+    "id": "task_005",
+    "description": "Create weekly financial inclusion newsletter",
+    "priority": "medium",
+    "due_date": "2025-05-03",
+    "tags": [
+      "content",
+      "financial_inclusion",
+      "weekly"
+    ],
+    "skill_required": "content_creation",
+    "estimated_minutes": 60
+  },
+  {
+    "id": "task_002",
+    "description": "Monitor financial inclusion metrics for Q1 2025",
+    "priority": "medium",
+    "due_date": "2025-05-15",
+    "tags": [
+      "monitoring",
+      "financial_inclusion"
+    ],
+    "skill_required": "monitoring",
+    "estimated_minutes": 45
+  },
+  {
+    "id": "task_007",
+    "description": "Research emerging fintech solutions for underbanked communities",
+    "priority": "medium",
+    "due_date": "2025-05-08",
+    "tags": [
+      "research",
+      "financial_inclusion",
+      "fintech"
+    ],
+    "skill_required": "research",
+    "estimated_minutes": 90
+  },
+  {
+    "id": "task_003",
+    "description": "Draft blog post on equitable AI systems",
+    "priority": "low",
+    "due_date": "2025-05-10",
+    "tags": [
+      "content",
+      "education"
+    ],
+    "skill_required": "content_creation",
+    "estimated_minutes": 120
+  },
+  {
+    "id": "task_008",
+    "description": "Draft social media content on AI ethics principles",
+    "priority": "low",
+    "due_date": "2025-05-12",
+    "tags": [
+      "content",
+      "social_media",
+      "ai_ethics"
+    ],
+    "skill_required": "content_creation",
+    "estimated_minutes": 45
+  }
+]

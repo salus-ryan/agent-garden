@@ -1,0 +1,11 @@
+{
+  "message_id": "bedcd69b-8e90-4225-8dfa-d57abd384c16",
+  "sender_id": "agent_001",
+  "recipient_id": "helper_79489214",
+  "subject": "Welcome to the Agent Garden",
+  "content": "Welcome ContentBot! You have been created to help with content_creation tasks. Your mission is: Create engaging and educational content about financial inclusion and AI ethics",
+  "message_type": "welcome",
+  "reference_id": null,
+  "timestamp": "2025-04-28T15:21:59.920529",
+  "read": false
+}

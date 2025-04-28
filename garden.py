@@ -20,7 +20,7 @@ logging.basicConfig(
 logger = logging.getLogger("agent_garden")
 
 from helpers import email_helper, memory_helper, backup_helper, task_prioritizer
-from helpers import agent_framework, agent_communication
+from helpers import agent_framework, agent_communication, lifecycle_manager
 from skills import skill_registry
 from perception import PerceptionManager, NewsSource, ApiSource
 
@@ -799,8 +799,15 @@ def run_night_phase(config: Dict[str, Any], perception_manager: PerceptionManage
     retention_days = int(os.getenv('BACKUP_RETENTION_DAYS', '7'))
     backup_helper.cleanup_old_backups(backup_dir, retention_days)
     
-    # Evaluate if new helper agents are needed
-    evaluate_helper_needs(agent_mgr, message_bus)
+    # Manage helper agent lifecycle (retirement and population control)
+    lifecycle_results = manage_helper_lifecycle(agent_mgr, message_bus)
+    
+    # Only evaluate new helper needs if we're below capacity
+    if lifecycle_results.get('active_helpers_after', 0) < 20:  # 20 is the default max
+        # Evaluate if new helper agents are needed
+        evaluate_helper_needs(agent_mgr, message_bus)
+    else:
+        print("⚠️ At maximum helper capacity - skipping helper needs evaluation")
 
 def main(phase: Optional[str] = None):
     """Main function to run the garden."""
@@ -1200,6 +1207,39 @@ def get_helper_reports(agent_mgr: agent_framework.AgentManager,
     
     return reports
 
+def manage_helper_lifecycle(agent_mgr: agent_framework.AgentManager,
+                           message_bus: agent_communication.MessageBus) -> Dict[str, Any]:
+    """Manage the lifecycle of helper agents, including retirement and population control."""
+    print("🔄 Managing helper agent lifecycle...")
+    
+    # Initialize lifecycle manager
+    lifecycle_mgr = lifecycle_manager.LifecycleManager(
+        agents_dir=AGENTS_DIR,
+        archive_dir=os.path.join(BASE_DIR, 'archives', 'helpers'),
+        max_active_helpers=20,  # Maximum number of active helpers
+        max_tasks_threshold=50,  # Retire after 50 tasks
+        max_days_threshold=30    # Retire after 30 days
+    )
+    
+    # Manage helper population
+    results = lifecycle_mgr.manage_helper_population(MAIN_AGENT_ID)
+    
+    # Log results
+    retired_count = len(results.get("retired_agents", []))
+    if retired_count > 0:
+        print(f"👋 Retired {retired_count} helper agents")
+        for agent_id, reason in results.get("retirement_reasons", {}).items():
+            print(f"  - {agent_id}: {reason}")
+            
+            # Store retirement in memory
+            memory_content = f"Retired helper agent {agent_id} due to: {reason}"
+            memory_system = memory_helper.MemorySystem(os.path.join('agents', MAIN_AGENT_ID))
+            memory_system.add_memory(memory_content, "lifecycle", ["helper_retirement", "lifecycle_management"])
+    
+    print(f"👥 Active helper count: {results.get('active_helpers_after', 0)} (max: {lifecycle_mgr.max_active_helpers})")
+    
+    return results
+
 def evaluate_helper_needs(agent_mgr: agent_framework.AgentManager,
                          message_bus: agent_communication.MessageBus) -> None:
     """Evaluate if new helper agents are needed based on task patterns."""
@@ -1220,6 +1260,16 @@ def evaluate_helper_needs(agent_mgr: agent_framework.AgentManager,
     # Get existing helpers
     existing_helpers = agent_mgr.get_helpers(MAIN_AGENT_ID)
     existing_specializations = [h.get('specialization', '').lower() for h in existing_helpers]
+    
+    # Check if we're at the maximum helper capacity
+    lifecycle_mgr = lifecycle_manager.LifecycleManager(
+        agents_dir=AGENTS_DIR,
+        archive_dir=os.path.join(BASE_DIR, 'archives', 'helpers')
+    )
+    active_helper_count = lifecycle_mgr.get_active_helper_count(MAIN_AGENT_ID)
+    if active_helper_count >= lifecycle_mgr.max_active_helpers:
+        print(f"⚠️ At maximum helper capacity ({active_helper_count}/{lifecycle_mgr.max_active_helpers})")
+        return
     
     # Identify skills that might need dedicated helpers
     for skill, count in skill_counts.items():
